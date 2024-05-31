@@ -1,4 +1,69 @@
-debounce = false
+local plr = game.Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+local debounce = false
+local cooldown = 1.0 -- Set the cooldown duration (in seconds)
+local  count = 0
+
+local animationId = "rbxassetid://17609552752" -- Replace with your animation ID
+local animationId2 = "rbxassetid://17624955402"
+
+-- Create the Animation object
+local animation = Instance.new("Animation")
+animation.AnimationId = animationId
+
+UIS.InputBegan:Connect(function(input, isProcessed)
+	if isProcessed then return end
+
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if count == 0 then
+	spawn(function()
+		wait(0.1)
+	end)
+			count = count + 1
+		end
+		if debounce then return end
+		debounce = true
+		print("Mouse Button 1 is pressed")
+
+		local humanoid = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+		if not humanoid then 
+			debounce = false
+			return 
+		end
+
+		local loadedAnimation = humanoid:LoadAnimation(animation)
+
+		loadedAnimation:Play()
+
+		local originalWalkSpeed = humanoid.WalkSpeed
+		local originalJumpPower = humanoid.JumpPower
+		humanoid.WalkSpeed = 0
+		humanoid.JumpPower = 0
+
+		game.ReplicatedStorage.CombatHit:FireServer()
+
+		local animationStopped = false
+		loadedAnimation.Stopped:Connect(function()
+			if animationStopped then return end
+			animationStopped = true
+			humanoid.WalkSpeed = originalWalkSpeed
+			humanoid.JumpPower = originalJumpPower
+			print("Animation stopped and player movement restored")
+		end)
+
+		-- Explicitly stop the animation after a very short duration (e.g., 0.1 seconds)
+		delay(0.4, function()
+			if not animationStopped then
+				loadedAnimation:Stop()
+				humanoid.WalkSpeed = originalWalkSpeed
+				humanoid.JumpPower = originalJumpPower
+				print("Explicitly stopped animation and restored player movement")
+			end
+		end)
+
+		-- Set a cooldown before allowing another click
+		delay(cooldown, function()
+			debounce = false
 			if count == 1 then
 				count = 0
 				local animation = Instance.new("Animation")
@@ -51,6 +116,117 @@ debounce = false
 				-- Set a cooldown before allowing another click
 				delay(cooldown, function()
 					debounce = false
+						debounce = false
+						if count == 1 then
+							count = 0
+							local animation = Instance.new("Animation")
+							animation.AnimationId = animationId2
+							if input.UserInputType == Enum.UserInputType.MouseButton1 then
+								if debounce then return end
+								debounce = true
+								print("Mouse Button 1 is pressed")
+
+								if not Enum.UserInputType.MouseButton1 then
+									return
+								end
+
+								local humanoid = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+								if not humanoid then 
+									debounce = false
+									return 
+								end
+
+								local loadedAnimation = humanoid:LoadAnimation(animation)
+
+								loadedAnimation:Play()
+
+								local originalWalkSpeed = humanoid.WalkSpeed
+								local originalJumpPower = humanoid.JumpPower
+								humanoid.WalkSpeed = 0
+								humanoid.JumpPower = 0
+
+								game.ReplicatedStorage.CombatHit:FireServer()
+
+								local animationStopped = false
+								loadedAnimation.Stopped:Connect(function()
+									if animationStopped then return end
+									animationStopped = true
+									humanoid.WalkSpeed = originalWalkSpeed
+									humanoid.JumpPower = originalJumpPower
+									print("Animation stopped and player movement restored")
+								end)
+
+								-- Explicitly stop the animation after a very short duration (e.g., 0.1 seconds)
+								delay(0.4, function()
+									if not animationStopped then
+										loadedAnimation:Stop()
+										humanoid.WalkSpeed = originalWalkSpeed
+										humanoid.JumpPower = originalJumpPower
+										print("Explicitly stopped animation and restored player movement")
+									end
+								end)
+
+								-- Set a cooldown before allowing another click
+								delay(cooldown, function()
+									debounce = false
+								end)
+							end
+						end
 					end)
 				end
 			end
+		end)
+	end
+end)
+
+local plr = game.Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+local humanoid = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+local cooldown = 2.0
+local sprintSpeed = 50
+local normalSpeed = 16 -- Assuming the default walk speed is 16
+
+-- Function to update humanoid if the character respawns
+local function updateHumanoid(character)
+	humanoid = character:FindFirstChildOfClass("Humanoid")
+end
+
+-- Connect the function to CharacterAdded event
+plr.CharacterAdded:Connect(updateHumanoid)
+
+-- Ensure humanoid is updated if the script is run after the character has spawned
+if plr.Character then
+	updateHumanoid(plr.Character)
+end
+
+local animationID = "rbxassetid://17622542560" -- use ur own
+local animationPriority = Enum.AnimationPriority.Action
+local animation = Instance.new("Animation")
+animation.AnimationId = animationID
+local animationTrack = humanoid:LoadAnimation(animation)
+animationTrack.Priority = animationPriority
+animationTrack.Looped = true
+
+-- Connect InputBegan event to handle sprint start
+UIS.InputBegan:Connect(function(input, isProcessed)
+	if isProcessed then return end
+
+	if input.KeyCode == Enum.KeyCode.LeftShift then
+		animationTrack:Play()
+		if humanoid then
+			humanoid.WalkSpeed = sprintSpeed
+		end
+	end
+end)
+
+-- Connect InputEnded event to handle sprint stop
+UIS.InputEnded:Connect(function(input, isProcessed)
+	if isProcessed then return end
+
+	if input.KeyCode == Enum.KeyCode.LeftShift then
+		animationTrack:Stop()
+		if humanoid then
+			humanoid.WalkSpeed = normalSpeed
+		end
+	end
+end)
