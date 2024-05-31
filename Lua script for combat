@@ -1,0 +1,56 @@
+debounce = false
+			if count == 1 then
+				count = 0
+				local animation = Instance.new("Animation")
+				animation.AnimationId = animationId2
+				if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				if debounce then return end
+				debounce = true
+				print("Mouse Button 1 is pressed")
+				
+					if not Enum.UserInputType.MouseButton1 then
+						return
+					end
+
+				local humanoid = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+				if not humanoid then 
+					debounce = false
+					return 
+				end
+
+				local loadedAnimation = humanoid:LoadAnimation(animation)
+
+				loadedAnimation:Play()
+
+				local originalWalkSpeed = humanoid.WalkSpeed
+				local originalJumpPower = humanoid.JumpPower
+				humanoid.WalkSpeed = 0
+				humanoid.JumpPower = 0
+
+				game.ReplicatedStorage.CombatHit:FireServer()
+
+				local animationStopped = false
+				loadedAnimation.Stopped:Connect(function()
+					if animationStopped then return end
+					animationStopped = true
+					humanoid.WalkSpeed = originalWalkSpeed
+					humanoid.JumpPower = originalJumpPower
+					print("Animation stopped and player movement restored")
+				end)
+
+				-- Explicitly stop the animation after a very short duration (e.g., 0.1 seconds)
+				delay(0.4, function()
+					if not animationStopped then
+						loadedAnimation:Stop()
+						humanoid.WalkSpeed = originalWalkSpeed
+						humanoid.JumpPower = originalJumpPower
+						print("Explicitly stopped animation and restored player movement")
+					end
+				end)
+
+				-- Set a cooldown before allowing another click
+				delay(cooldown, function()
+					debounce = false
+					end)
+				end
+			end
